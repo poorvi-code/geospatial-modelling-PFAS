@@ -25,3 +25,12 @@ For analysis, the data is divided into **seven datasets based on PFAS type**.
 - Scikit-learn  
 - XGBoost  
 - Parquet datasets
+
+## Setup
+
+Create and activate a virtual environment, then install dependencies:
+
+```bash
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
