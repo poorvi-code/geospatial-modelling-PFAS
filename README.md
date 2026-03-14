@@ -5,9 +5,13 @@ This project analyzes the spatial occurrence of **PFAS (Per- and Polyfluoroalkyl
 The system applies geospatial analysis and machine learning to identify contamination patterns and detect potential hotspots through an interactive dashboard.
 
 ## Dataset
-The dataset is derived from the **PFAS Data Hub** and contains over **300,000 environmental monitoring records**, including geographic coordinates, PFAS chemical types, environmental media types, and concentration measurements.
 
-For analysis, the data is divided into **seven datasets based on PFAS type**.
+The PFAS datasets used in this project are stored externally
+If needed, download them from the shared folder:
+
+🔗 **[Download PFAS Datasets](https://drive.google.com/drive/folders/1hckHEGjfBPQsPjSYUpze5fKEroHNym-j?usp=sharing)**
+
+After downloading, place the files inside a `data/procesed` directory in the project root
 
 ## Features
 - Geospatial analysis of PFAS contamination data  
