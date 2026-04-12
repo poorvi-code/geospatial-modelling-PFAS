@@ -1,8 +1,44 @@
-venv/
-.env/
+# Python
 __pycache__/
-*.pyc
-data/
-*.parquet
-/pfas_outputs
-*.geojson
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+prd.md
+# Jupyter (legacy — do not add new notebooks)
+.ipynb_checkpoints/
+
+# Data — large files
+data/raw/*.csv
+data/interim/*.parquet
+data/features/*.parquet
+data/rasters/*.tif
+data/kdtrees/*.pkl
+data/kdtrees/*.npy
+
+# Models
+models/*.pkl
+models/*.json
+
+# Outputs
+outputs/figures/
+outputs/predictions/
+
+# MLflow
+mlruns/
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.vscode/
+.idea/

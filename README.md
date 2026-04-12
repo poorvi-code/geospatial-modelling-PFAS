@@ -1,40 +1,40 @@
-# Geospatial Modeling and Analysis of PFAS Occurrence
+# PFAS Geospatial Decision-Support System
 
-## Overview
-This project analyzes the spatial occurrence of **PFAS (Per- and Polyfluoroalkyl Substances)** using large-scale environmental monitoring data.  
-The system applies geospatial analysis and machine learning to identify contamination patterns and detect potential hotspots through an interactive dashboard.
+A modular Python system for global PFAS contamination modeling, hotspot detection, and risk assessment.
 
-## Dataset
+## Project Structure
+- `dataset/`: Input raw data (`pfas_raw.csv`, `airports.csv`).
+- `outputs/`: All generated results, models, and spatial data.
+- `implementation/`: Core Python modules for the full pipeline.
+- `main.py`: Orchestrator to run everything in order.
 
-The PFAS datasets used in this project are stored externally
-If needed, download them from the shared folder:
+## How to Run from Scratch
 
-🔗 **[Download PFAS Datasets](https://drive.google.com/drive/folders/1hckHEGjfBPQsPjSYUpze5fKEroHNym-j?usp=sharing)**
-
-After downloading, place the files inside a `data/procesed` directory in the project root
-
-## Features
-- Geospatial analysis of PFAS contamination data  
-- Machine learning models for contamination prediction  
-- Spatial clustering for hotspot detection  
-- Explanations and solutions regarding contamination 
-- Composite contamination index generation  
-- Interactive dashboard for visualization  
-- Simulation based PFA concentration toggle
-
-## Tech Stack
-- Python  
-- Pandas  
-- GeoPandas  
-- Scikit-learn  
-- XGBoost  
-- Parquet datasets
-
-## Setup
-
-Create and activate a virtual environment, then install dependencies:
+### 1. Requirements
+Ensure you have Python 3.10+ installed.
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
+# Install dependencies
+pip install pandas geopandas pyarrow scipy numpy scikit-learn requests tqdm joblib lightgbm esda libpysal streamlit pydeck
+```
+
+### 2. Run the Full Pipeline
+This will clean the data, build features, train models, and identify hotspots.
+
+```bash
+python main.py
+```
+
+### 3. Launch the Dashboard
+View the interactive risk map and perform point queries.
+
+```bash
+streamlit run implementation/dashboard.py
+```
+
+## Modules
+1. **`clean.py`**: Ingestion, target creation, and spatial feature engineering.
+2. **`train.py`**: LightGBM training for exceedance and concentration.
+3. **`hotspot.py`**: Local spatial autocorrelation (Getis-Ord Gi*) and heatmap generation.
+4. **`cci.py`**: Composite Contamination Index calculation across 7 compounds.
+5. **`api.py`**: Low-latency global inference engine.
