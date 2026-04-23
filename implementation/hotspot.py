@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA_PATH = ROOT / "dataset" / "pfas_cleaned.parquet"
+DATA_PATH = ROOT / "dataset" / "pfas_golden.parquet"
 OUTPUTS_DIR = ROOT / "outputs" / "spatial"
 
 def identify_hotspots(radius_km=50):

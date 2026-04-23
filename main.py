@@ -1,48 +1,83 @@
 """
 main.py
 =======
-Root orchestration script for the PFAS Geospatial System.
-Runs the entire pipeline from cleaning to visualization.
+PFAS Geospatial Intelligence Platform — Pipeline Orchestrator
+--------------------------------------------------------------
+Runs the full pipeline in order:
+  1. Data cleaning & golden dataset build  (implementation/clean.py)
+  2. Model training with SOTA algorithms   (implementation/train.py)
+  3. Spatial hotspot detection             (implementation/hotspot.py)
+  4. CCI computation                       (implementation/cci.py)
+
+After this completes, launch the dashboard with:
+  streamlit run implementation/dashboard.py
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
+from tqdm import tqdm
 
-def run_module(module_name, args=None, optional=False):
-    print(f"\n>>> Running Module: {module_name} ...")
-    cmd = [sys.executable, "-m", module_name]
-    if args: cmd.extend(args)
-    import os
+ROOT = Path(__file__).resolve().parent
+
+
+def run_step(label: str, module: str, pbar: tqdm, optional: bool = False):
+    pbar.set_description(f"Running {label}")
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(Path(__file__).resolve().parent) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
     
-    result = subprocess.run(cmd, env=env, capture_output=False)
+    result = subprocess.run(
+        [sys.executable, "-m", module],
+        env=env,
+        cwd=str(ROOT),
+    )
+    
     if result.returncode != 0:
         if optional:
-            print(f"S Warning: Optional module {module_name} failed. Proceeding with local data.")
-            return
-        print(f"!!! Module {module_name} FAILED !!!")
-        sys.exit(1)
-    print(f"--- Module {module_name} COMPLETED ---")
+            tqdm.write(f"  ⚠  Optional step '{label}' failed — continuing.")
+            return False
+        tqdm.write(f"\n  ✗  Step '{label}' FAILED with exit code {result.returncode}.")
+        tqdm.write(f"     Error: {result.stderr}")
+        tqdm.write("     Fix the error above, then re-run main.py.\n")
+        sys.exit(result.returncode)
+    
+    pbar.update(1)
+    return True
+
 
 def main():
-    # 0. PDH CNRS Ingestion (Global Pull)
-    run_module("implementation.pipelines.pdh_ingestion", optional=True)
-    
-    # 1. Pipeline (Merges local Raw + Local Shapefile + PDH if it exists)
-    run_module("implementation.clean")
-    
-    # 2. Training
-    run_module("implementation.train")
-    
-    # 3. Spatial & Indexing
-    run_module("implementation.hotspot")
-    run_module("implementation.cci")
-    
-    print("\n✅ ALL STEPS FINISHED SUCCESSFULLY.")
-    print("\nTo launch the dashboard:")
-    print("  streamlit run implementation/dashboard.py")
+    print("""
+╔══════════════════════════════════════════════════════╗
+║       PFAS Risk Intelligence — Pipeline Runner       ║
+╚══════════════════════════════════════════════════════╝
+""")
+
+    steps = [
+        ("Step 1 — Build Golden Dataset",        "implementation.clean",   False),
+        ("Step 2 — Train SOTA Models (Optuna)",  "implementation.train",   False),
+        ("Step 3 — Detect Spatial Hotspots",     "implementation.hotspot", True),
+        ("Step 4 — Compute CCI Index",           "implementation.cci",     True),
+    ]
+
+    with tqdm(total=len(steps), unit="step", dynamic_ncols=True) as pbar:
+        for label, module, optional in steps:
+            run_step(label, module, pbar, optional)
+
+    print("""
+╔══════════════════════════════════════════════════════╗
+║                 ✅  ALL STEPS COMPLETE               ║
+╚══════════════════════════════════════════════════════╝
+
+Launch the dashboard:
+  streamlit run implementation/dashboard.py
+
+Or run individual steps:
+  python -m implementation.clean
+  python -m implementation.train
+  python -m implementation.hotspot
+""")
+
 
 if __name__ == "__main__":
     main()
