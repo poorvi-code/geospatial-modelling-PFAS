@@ -27,63 +27,61 @@ log = logging.getLogger(__name__)
 ROOT       = Path(__file__).resolve().parent.parent
 MODELS_DIR = ROOT / "outputs" / "models"
 
-# ---------------------------------------------------------------------------
+
 # Risk level taxonomy
-# ---------------------------------------------------------------------------
 RISK_LEVELS = [
-    (0,  20,  "🟢 Safe Zone",       "#22c55e",
+    (0,  20,  "Safe Zone",       "#22c55e",
      "Contamination signals are very low. This area shows no major PFAS pressure."),
-    (20, 40,  "🟡 Watch Zone",      "#eab308",
+    (20, 40,  "Watch Zone",      "#eab308",
      "Some background contamination is present. Routine monitoring is advisable."),
-    (40, 60,  "🟠 Caution Zone",    "#f97316",
+    (40, 60,  "Caution Zone",    "#f97316",
      "Elevated risk detected. This area warrants detailed investigation and sampling."),
-    (60, 80,  "🔴 High Alert",      "#ef4444",
+    (60, 80,  "High Alert",      "#ef4444",
      "High contamination probability. Regulatory action is strongly recommended."),
-    (80, 101, "🚨 Critical Alert",  "#991b1b",
+    (80, 101, "Critical Alert",  "#991b1b",
      "Extreme risk. Immediate intervention and public health advisory may be required."),
 ]
 
-# ---------------------------------------------------------------------------
+
 # Preset scenario packs
-# ---------------------------------------------------------------------------
 SCENARIO_PRESETS = {
     "baseline": {
-        "label": "🏁 Baseline (No Changes)",
+        "label": "Baseline",
         "description": "Current conditions — no modifications applied.",
         "mods": {},
     },
     "industrial_spill": {
-        "label": "🏭 Industrial Spill",
+        "label": "Industrial Spill",
         "description": "Simulates a major industrial discharge event. Spatial contamination density surges.",
         "mods": {"spatial_density_boost": 3.0, "mean_log_value_boost": 1.5},
     },
     "airport_expansion": {
-        "label": "✈️ Airport Expansion",
+        "label": "Airport Expansion",
         "description": "A new large runway nearby increases AFFF foam usage risk.",
         "mods": {"airport_distance_km": 2.0},
     },
     "new_wastewater_plant": {
-        "label": "🏗️ New Wastewater Plant",
+        "label": "New Wastewater Plant",
         "description": "A wastewater treatment plant is built 5 km away. PFAS leaching risk rises.",
         "mods": {"spatial_density_boost": 1.5, "mean_log_value_boost": 0.8},
     },
     "cleanup_basic": {
-        "label": "🧹 Basic Cleanup",
+        "label": "Basic Cleanup",
         "description": "Standard remediation reduces local PFAS concentration by ~30%.",
         "mods": {"mean_log_value_reduction": 0.30},
     },
     "cleanup_advanced": {
-        "label": "💎 Advanced Treatment",
+        "label": "Advanced Treatment",
         "description": "State-of-the-art granular activated carbon filtration. ~70% reduction.",
         "mods": {"mean_log_value_reduction": 0.70},
     },
     "regulation_ban": {
-        "label": "📜 PFAS Use Ban",
+        "label": "PFAS Use Ban",
         "description": "Regulatory ban on long-chain PFAS (simulates post-2018 effect). Contamination trends downward.",
         "mods": {"mean_log_value_reduction": 0.45, "is_post_2018_override": 1},
     },
     "worst_case": {
-        "label": "☠️ Worst Case Combination",
+        "label": "Worst Case Combination",
         "description": "Industrial spill + nearby airport + no cleanup. Upper-bound risk estimate.",
         "mods": {
             "spatial_density_boost": 4.0,
@@ -162,9 +160,9 @@ class SimulationEngine:
 
         log.info(f"SimulationEngine loaded model from {model_file.name}")
 
-    # ------------------------------------------------------------------
+    
     # Core prediction helpers
-    # ------------------------------------------------------------------
+    
 
     def _predict_prob(self, X: pd.DataFrame) -> float:
         X_aligned = X.reindex(columns=self.schema, fill_value=-1).fillna(-1)
@@ -200,9 +198,9 @@ class SimulationEngine:
                 df[col] = mods[key]
         return df
 
-    # ------------------------------------------------------------------
+    
     # Public API
-    # ------------------------------------------------------------------
+    
 
     def run_preset(self, base_features: pd.DataFrame, preset_key: str) -> SimResult:
         """Run a named preset scenario against a base feature vector."""

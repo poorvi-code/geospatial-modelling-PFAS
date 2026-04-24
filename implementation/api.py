@@ -75,13 +75,13 @@ class PFASPredictor:
         if hasattr(self.clf, "calibrated_classifiers_") and len(self.clf.calibrated_classifiers_) > 0:
             # For ensemble=False, the first one is the calibrated wrapper
             base_clf = self.clf.calibrated_classifiers_[0].estimator
-            # Dig through FrozenEstimator if present
-            while hasattr(base_clf, "estimator") and not hasattr(base_clf, "classes_"):
-                base_clf = base_clf.estimator
-        elif hasattr(self.clf, "estimator"):
-            base_clf = self.clf.estimator
-            while hasattr(base_clf, "estimator") and not hasattr(base_clf, "classes_"):
-                base_clf = base_clf.estimator
+
+        # Unpack wrappers like FrozenEstimator
+        while hasattr(base_clf, "estimator"):
+            # If the inner model is what we want (LightGBM), stop unpacking
+            if "lightgbm" in str(type(base_clf)).lower():
+                break
+            base_clf = base_clf.estimator
 
         try:
             self.explainer = shap.TreeExplainer(base_clf, feature_perturbation="tree_path_dependent")
@@ -104,7 +104,6 @@ class PFASPredictor:
         """
         pt = np.deg2rad([[lat, lon]])
 
-        # --- KD-tree lookups ---
         d_tr, _ = self.tree_train.query(pt, k=1)
         nearest_km = float(d_tr[0]) * EARTH_R
 
@@ -118,20 +117,17 @@ class PFASPredictor:
         mean_log_50   = float(np.mean(self.train_vals[idx_50])) if idx_50 else 0.0
         density_50    = len(idx_50)
 
-        # --- Substance encoding ---
         sub_upper = substance.upper().strip()
         sub_ord   = SUBSTANCE_ORD.get(sub_upper, 6)
         is_long   = int(sub_upper in LONG_CHAIN)
         c_chain   = CARBON_CHAIN.get(sub_upper, 8)
         is_sulf   = int(sub_upper in SULFONYL)
 
-        # --- Media encoding ---
         m = media_type.lower()
         is_aquatic    = int(any(k in m for k in ["water", "groundwater", "sea", "drink", "surface"]))
         is_soil       = int(any(k in m for k in ["soil", "sediment"]))
         is_wastewater = int(any(k in m for k in ["waste", "leach"]))
 
-        # --- Temporal ---
         yr_norm  = (year - 2001) / 23.0
         post2018 = int(year >= 2018)
 
@@ -158,12 +154,12 @@ class PFASPredictor:
 
     def _confidence(self, nearest_km: float) -> tuple:
         if nearest_km < 100:
-            return "HIGH",          "📍 Location is within 100 km of training data."
+            return "HIGH",          "Location is within 100 km of training data."
         if nearest_km < 500:
-            return "MEDIUM",        "📊 Location is 100–500 km from training data. Use with caution."
+            return "MEDIUM",        "Location is 100–500 km from training data. Use with caution."
         if nearest_km < 2000:
-            return "LOW",           "⚠️ Location is 500–2000 km from training data. Rough estimate only."
-        return "EXTRAPOLATION",     "🚧 Location is >2000 km from training data. Treat as speculative."
+            return "LOW",           "Location is 500–2000 km from training data. Rough estimate only."
+        return "EXTRAPOLATION",     "Location is >2000 km from training data. Treat as speculative."
 
     def predict(
         self,

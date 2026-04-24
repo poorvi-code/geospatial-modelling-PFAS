@@ -1,7 +1,7 @@
 """
 implementation/xai.py
 =====================
-Explainable AI Engine — Chat-Based Natural Language Interface
+Explainable AI Engine - Chat-Based Natural Language Interface
 --------------------------------------------------------------
 What this does:
   1. Computes SHAP values (TreeExplainer) for any prediction.
@@ -9,7 +9,7 @@ What this does:
      found and WHY it reached its conclusion.
   3. Provides a conversational Q&A function that answers any
      user question about the results, the model, or PFAS science
-     in plain language — no jargon, no LLM API required.
+     in plain language - no jargon, no LLM API required.
 
 No external API or LLM wrapper is used. All explanations are
 deterministic, template-driven, and grounded in the actual model output.
@@ -57,7 +57,7 @@ PFAS_KNOWLEDGE: Dict[str, str] = {
     "pfas": (
         "**PFAS** (Per- and Polyfluoroalkyl Substances) are a group of over 10,000 man-made "
         "chemicals. Because the carbon-fluorine bond is one of the strongest in chemistry, PFAS "
-        "do not break down naturally — earning them the nickname 'forever chemicals'. They are "
+        "do not break down naturally - earning them the nickname 'forever chemicals'. They are "
         "found in non-stick cookware, food packaging, firefighting foam, and many industrial "
         "processes."
     ),
@@ -77,14 +77,14 @@ PFAS_KNOWLEDGE: Dict[str, str] = {
         "The **100 ng/L (nanograms per litre)** threshold used in this model is based on "
         "earlier EU drinking water screening values. It represents a conservative indicator "
         "of elevated contamination. The 2020 EU Drinking Water Directive set a combined "
-        "PFAS limit of 100 ng/L for 20 specific compounds, and 10 ng/L for all PFAS total — "
+        "PFAS limit of 100 ng/L for 20 specific compounds, and 10 ng/L for all PFAS total - "
         "so some locations above our 100 ng/L marker may already exceed regulatory limits."
     ),
     "confidence": (
         "**Confidence** in a prediction measures how close this location is to real historical "
-        "measurements. HIGH confidence means there are many nearby data points — the model is "
+        "measurements. HIGH confidence means there are many nearby data points - the model is "
         "interpolating from real evidence. LOW confidence or EXTRAPOLATION means the model is "
-        "predicting in a region with little or no training data — treat results as indicative only."
+        "predicting in a region with little or no training data - treat results as indicative only."
     ),
     "shap": (
         "**SHAP values** (SHapley Additive exPlanations) tell us exactly how much each feature "
@@ -100,13 +100,13 @@ PFAS_KNOWLEDGE: Dict[str, str] = {
         "at hundreds of airports worldwide, often extending several kilometres from the runway."
     ),
     "model": (
-        "This project uses **LightGBM** — a gradient-boosted decision tree model — as the primary "
+        "This project uses **LightGBM** - a gradient-boosted decision tree model - as the primary "
         "predictor, tuned with Bayesian optimization (Optuna). It is cross-validated using spatial "
         "block groups to prevent data leakage. The model predicts the probability that a location "
         "exceeds 100 ng/L PFAS concentration, and also estimates the likely concentration range."
     ),
     "long chain": (
-        "**Long-chain PFAS** (such as PFOS, PFOA, PFNA, PFDA — 8+ carbon atoms) are the most "
+        "**Long-chain PFAS** (such as PFOS, PFOA, PFNA, PFDA - 8+ carbon atoms) are the most "
         "concerning. They bioaccumulate in living organisms and persist much longer in soil and "
         "groundwater than short-chain alternatives. The EU and EPA have prioritised reducing "
         "long-chain PFAS as the most urgent regulatory concern."
@@ -165,13 +165,15 @@ class XAIEngine:
         # Dig for the underlying tree model if wrapped (CalibratedClassifierCV, FrozenEstimator)
         base_model = model
         if hasattr(model, "calibrated_classifiers_") and len(model.calibrated_classifiers_) > 0:
+            # For ensemble=False, the first one is the calibrated wrapper
             base_model = model.calibrated_classifiers_[0].estimator
-            while hasattr(base_model, "estimator") and not hasattr(base_model, "classes_"):
-                base_model = base_model.estimator
-        elif hasattr(model, "estimator"):
-            base_model = model.estimator
-            while hasattr(base_model, "estimator") and not hasattr(base_model, "classes_"):
-                base_model = base_model.estimator
+
+        # Unpack wrappers like FrozenEstimator
+        while hasattr(base_model, "estimator"):
+            # If the inner model is what we want (LightGBM), stop unpacking
+            if "lightgbm" in str(type(base_model)).lower():
+                break
+            base_model = base_model.estimator
 
         try:
             self.explainer = shap.TreeExplainer(base_model, feature_perturbation="tree_path_dependent")
@@ -211,7 +213,7 @@ class XAIEngine:
         top_features = []
         for feat_key, shap_val in ranked[:10]:
             label    = FEATURE_LABELS.get(feat_key, feat_key.replace("_", " ").title())
-            direction = "↑ increases risk" if shap_val > 0 else "↓ reduces risk"
+            direction = "increases risk" if shap_val > 0 else "reduces risk"
             top_features.append({
                 "feature":           feat_key,
                 "label":             label,
@@ -250,7 +252,7 @@ class XAIEngine:
     def chat(self, user_message: str) -> str:
         """
         Answer any user question in plain English.
-        No external LLM — all responses are deterministic and grounded
+        No external LLM - all responses are deterministic and grounded
         in the current prediction context + the PFAS knowledge base.
         """
         msg = user_message.strip().lower()
@@ -299,8 +301,8 @@ class XAIEngine:
         # What does the score mean?
         if re.search(r"(score|100|scale|number|rating)", msg):
             return (
-                "The **Risk Score** (0–100) is the model's estimated probability of exceeding "
-                "100 ng/L PFAS — a key regulatory threshold. A score of 75 means the model "
+                "The **Risk Score** (0-100) is the model's estimated probability of exceeding "
+                "100 ng/L PFAS - a key regulatory threshold. A score of 75 means the model "
                 "believes there is a 75% chance contamination at this location exceeds that limit. "
                 "Scores below 20 are considered low risk; above 60 are high concern."
             )
@@ -315,13 +317,13 @@ class XAIEngine:
                 "Monte Carlo uncertainty band."
             )
 
-        # Default fallback — still helpful
+        # Default fallback - still helpful
         if ctx:
             return (
                 f"Based on the current analysis for **{ctx.compound}** at this location: "
                 f"{ctx.headline} "
                 f"The top driver is **{ctx.top_features[0]['label']}**. "
-                "Ask me anything more specific — for example: 'Why is the risk high?', "
+                "Ask me anything more specific - for example: 'Why is the risk high?', "
                 "'What is PFOS?', or 'What would reduce the risk here?'"
             )
 
@@ -348,12 +350,12 @@ class XAIEngine:
             ),
             "spatial_density_50km": (
                 f"There are **{int(val) if val is not None else '?'} recorded PFAS measurements** within 50 km. "
-                f"Higher density {direction} estimated risk — areas with more historical contamination tend to stay contaminated."
+                f"Higher density {direction} estimated risk - areas with more historical contamination tend to stay contaminated."
                 if val is not None else f"{label} {direction} risk."
             ),
             "mean_log_value_50km": (
                 f"The average PFAS level in the surrounding area {direction} contamination risk. "
-                "This is a strong local signal — areas with elevated neighbours tend to be elevated themselves."
+                "This is a strong local signal - areas with elevated neighbours tend to be elevated themselves."
             ),
             "is_long_chain": (
                 f"**{feat.replace('is_','').replace('_',' ').title()}** compounds (like PFOS and PFOA) "
@@ -361,7 +363,7 @@ class XAIEngine:
             ),
             "nearest_training_point_km": (
                 f"The nearest real PFAS measurement is **{val:.0f} km** away. "
-                f"This {direction} prediction confidence — farther from known data means more uncertainty."
+                f"This {direction} prediction confidence - farther from known data means more uncertainty."
                 if val is not None else f"{label} {direction} risk."
             ),
         }
@@ -370,16 +372,16 @@ class XAIEngine:
     def _build_headline(self, prob: float, compound: str) -> str:
         if prob >= 0.65:
             return (
-                f"🚨 **High contamination risk detected** for {compound}. "
+                f"High contamination risk detected for {compound}. "
                 f"The model estimates a **{prob*100:.0f}% probability** of exceeding 100 ng/L."
             )
         if prob >= 0.35:
             return (
-                f"⚠️ **Moderate risk** for {compound}. "
+                f"Moderate risk for {compound}. "
                 f"There is a **{prob*100:.0f}% chance** of exceeding the 100 ng/L threshold."
             )
         return (
-            f"✅ **Lower risk** for {compound}. "
+            f"Lower risk for {compound}. "
             f"The model estimates only a **{prob*100:.0f}% probability** of elevated contamination."
         )
 
@@ -409,21 +411,21 @@ class XAIEngine:
     def _data_quality_note(nearest_km: float) -> str:
         if nearest_km < 50:
             return (
-                "📍 **Data quality: HIGH** — This location is within 50 km of real measurements. "
+                "Data quality: HIGH - This location is within 50 km of real measurements. "
                 "Predictions are well-supported by local evidence."
             )
         if nearest_km < 200:
             return (
-                "📊 **Data quality: MEDIUM** — The nearest real measurement is "
+                "Data quality: MEDIUM - The nearest real measurement is "
                 f"{nearest_km:.0f} km away. Results are indicative; local sampling is advised."
             )
         if nearest_km < 1000:
             return (
-                "⚠️ **Data quality: LOW** — This location is {:.0f} km from any training data. ".format(nearest_km) +
+                "Data quality: LOW - This location is {:.0f} km from any training data. ".format(nearest_km) +
                 "The model is extrapolating. Treat results as a rough guide only."
             )
         return (
-            "🚧 **Data quality: EXTRAPOLATION** — This location is more than 1,000 km from any "
+            "Data quality: EXTRAPOLATION - This location is more than 1,000 km from any "
             "historical PFAS measurement in the dataset. Predictions should not be used for "
             "decision-making without local laboratory confirmation."
         )
@@ -463,14 +465,14 @@ class XAIEngine:
             )
         if ctx.exceedance_prob >= 0.5:
             return (
-                f"⚠️ The model estimates a **{ctx.exceedance_prob*100:.0f}% chance** that "
+                f"The model estimates a **{ctx.exceedance_prob*100:.0f}% chance** that "
                 f"**{ctx.compound}** levels exceed 100 ng/L at this location. "
-                "This is a screening alert — **do not use this as a safety clearance**. "
+                "This is a screening alert - **do not use this as a safety clearance**. "
                 "Commission laboratory testing before making any public health decisions. "
                 f"Estimated concentration: **{ctx.concentration_ngl:.1f} ng/L**."
             )
         return (
-            f"✅ The predicted risk here is relatively low ({ctx.exceedance_prob*100:.0f}% exceedance probability). "
+            f"The predicted risk here is relatively low ({ctx.exceedance_prob*100:.0f}% exceedance probability). "
             "However, no AI model replaces actual water testing. "
             "For certainty, request laboratory analysis from an accredited environmental lab."
         )
@@ -490,19 +492,19 @@ class XAIEngine:
     def _answer_remediation():
         return (
             "Common approaches to reduce PFAS at a site:\n\n"
-            "- **Source control** — eliminate the PFAS input (e.g. replace AFFF foam with PFAS-free alternatives)\n"
-            "- **Granular Activated Carbon (GAC) filtration** — very effective for drinking water (~70–90% removal)\n"
-            "- **Pump-and-treat** — extract contaminated groundwater and treat above ground\n"
-            "- **Soil excavation** — remove heavily contaminated soil near the source\n"
-            "- **In-situ stabilisation** — immobilise PFAS in soil to prevent migration\n\n"
+            "- **Source control** - eliminate the PFAS input (e.g. replace AFFF foam with PFAS-free alternatives)\n"
+            "- **Granular Activated Carbon (GAC) filtration** - very effective for drinking water (~70-90% removal)\n"
+            "- **Pump-and-treat** - extract contaminated groundwater and treat above ground\n"
+            "- **Soil excavation** - remove heavily contaminated soil near the source\n"
+            "- **In-situ stabilisation** - immobilise PFAS in soil to prevent migration\n\n"
             "Use the **Simulation Lab** to model how cleanup interventions change the risk score."
         )
 
     def _answer_accuracy(self, ctx):
         base = (
-            "The model was validated using **spatial block cross-validation** — a rigorous method "
+            "The model was validated using **spatial block cross-validation** - a rigorous method "
             "that prevents data leakage between geographically close samples. "
-            "It typically achieves a **ROC-AUC of 0.85–0.92** on held-out spatial blocks. "
+            "It typically achieves a **ROC-AUC of 0.85-0.92** on held-out spatial blocks. "
         )
         if ctx:
             return base + ctx.data_quality_note
