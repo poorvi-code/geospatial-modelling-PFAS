@@ -78,6 +78,5 @@ Or run individual steps:
   python -m implementation.hotspot
 """)
 
-
 if __name__ == "__main__":
     main()
