@@ -54,75 +54,104 @@ FEATURE_LABELS: Dict[str, str] = {
 # PFAS science knowledge base (used for Q&A)
 # ---------------------------------------------------------------------------
 PFAS_KNOWLEDGE: Dict[str, str] = {
+    "map_icon": (
+        "Map icons and markers explained:\n\n"
+        "🏠 Home / place pin: marks the exact location you selected for analysis — "
+        "either typed in manually or chosen via the address search. This is the point "
+        "the model assessed for PFAS risk.\n\n"
+        "Green dots / cluster markers: each dot represents a historical PFAS measurement "
+        "from the training dataset (a real laboratory sample). The denser the dots, the more "
+        "real-world data covers that area — this directly increases prediction confidence.\n\n"
+        "Number on a cluster bubble (e.g. '142'): this is the count of individual PFAS "
+        "measurements that exist within that geographic cluster. For example, '142' means "
+        "142 separate lab samples were recorded in that area. Click the cluster to zoom in "
+        "and see individual points.\n\n"
+        "Heatmap gradient (green → white): the green-to-white colour wash on the "
+        "Overview map shows contamination density from the Gi* hotspot analysis. Bright "
+        "white areas are statistically significant hotspots (Gi* z-score > 2.58) — areas "
+        "where measured PFAS concentrations are unusually high compared to surrounding areas."
+    ),
     "pfas": (
-        "**PFAS** (Per- and Polyfluoroalkyl Substances) are a group of over 10,000 man-made "
+        "PFAS (Per- and Polyfluoroalkyl Substances) are a group of over 10,000 man-made "
         "chemicals. Because the carbon-fluorine bond is one of the strongest in chemistry, PFAS "
         "do not break down naturally - earning them the nickname 'forever chemicals'. They are "
         "found in non-stick cookware, food packaging, firefighting foam, and many industrial "
         "processes."
     ),
     "pfos": (
-        "**PFOS** (Perfluorooctane Sulfonic Acid) is an 8-carbon sulfonate PFAS. It was the "
+        "PFOS (Perfluorooctane Sulfonic Acid) is an 8-carbon sulfonate PFAS. It was the "
         "primary ingredient in Scotchgard and military/airport firefighting foam (AFFF). "
         "It bioaccumulates in human blood and is linked to thyroid disease, immune suppression, "
         "and cancer. It has been restricted under the Stockholm Convention since 2009."
     ),
     "pfoa": (
-        "**PFOA** (Perfluorooctanoic Acid) was used to manufacture Teflon non-stick coatings. "
+        "PFOA (Perfluorooctanoic Acid) was used to manufacture Teflon non-stick coatings. "
         "It is a probable human carcinogen and was phased out voluntarily by manufacturers "
         "in the US by 2015. Drinking water contamination from PFOA has been documented near "
         "many industrial facilities worldwide."
     ),
     "threshold": (
-        "The **100 ng/L (nanograms per litre)** threshold used in this model is based on "
+        "The 100 ng/L (nanograms per litre) threshold used in this model is based on "
         "earlier EU drinking water screening values. It represents a conservative indicator "
         "of elevated contamination. The 2020 EU Drinking Water Directive set a combined "
         "PFAS limit of 100 ng/L for 20 specific compounds, and 10 ng/L for all PFAS total - "
         "so some locations above our 100 ng/L marker may already exceed regulatory limits."
     ),
     "confidence": (
-        "**Confidence** in a prediction measures how close this location is to real historical "
+        "Confidence in a prediction measures how close this location is to real historical "
         "measurements. HIGH confidence means there are many nearby data points - the model is "
         "interpolating from real evidence. LOW confidence or EXTRAPOLATION means the model is "
         "predicting in a region with little or no training data - treat results as indicative only."
     ),
     "shap": (
-        "**SHAP values** (SHapley Additive exPlanations) tell us exactly how much each feature "
+        "SHAP values (SHapley Additive exPlanations) tell us exactly how much each feature "
         "pushed the model's prediction up or down. A positive SHAP value for 'Distance to Airport' "
         "means being close to an airport *increased* the predicted risk. A negative value means "
         "that feature *decreased* risk. SHAP is mathematically grounded in game theory and is the "
         "gold standard for explaining machine learning predictions."
     ),
     "airport": (
-        "**Airports** are a major PFAS source because of Aqueous Film Forming Foam (AFFF), a "
+        "Airports are a major PFAS source because of Aqueous Film Forming Foam (AFFF), a "
         "firefighting agent historically used in fire drills and emergencies. AFFF contains high "
         "concentrations of PFOS and PFOA. Soil and groundwater contamination has been documented "
         "at hundreds of airports worldwide, often extending several kilometres from the runway."
     ),
     "model": (
-        "This project uses **LightGBM** - a gradient-boosted decision tree model - as the primary "
+        "This project uses LightGBM - a gradient-boosted decision tree model - as the primary "
         "predictor, tuned with Bayesian optimization (Optuna). It is cross-validated using spatial "
         "block groups to prevent data leakage. The model predicts the probability that a location "
         "exceeds 100 ng/L PFAS concentration, and also estimates the likely concentration range."
     ),
     "long chain": (
-        "**Long-chain PFAS** (such as PFOS, PFOA, PFNA, PFDA - 8+ carbon atoms) are the most "
+        "Long-chain PFAS (such as PFOS, PFOA, PFNA, PFDA - 8+ carbon atoms) are the most "
         "concerning. They bioaccumulate in living organisms and persist much longer in soil and "
         "groundwater than short-chain alternatives. The EU and EPA have prioritised reducing "
         "long-chain PFAS as the most urgent regulatory concern."
     ),
+    "general": (
+        "Total PFAS Score provides an aggregate risk assessment across all monitored "
+        "compounds (PFOS, PFOA, PFHxS, PFNA, PFDA, PFHpA, PFBS). The Estimated Concentration "
+        "is the mathematical sum of all individual predictions, while the Risk Probability "
+        "reflects the likelihood that at least one of these compounds exceeds the 100 ng/L threshold. "
+        "This is the most comprehensive screening indicator for a site's overall chemical burden."
+    ),
 }
 
 _KB_KEYWORDS = {
-    "pfas": ["pfas", "forever chemical", "fluorine", "polyfluoro"],
-    "pfos": ["pfos", "perfluorooctane", "sulfonate"],
-    "pfoa": ["pfoa", "perfluorooctanoic", "teflon", "non-stick"],
+    "pfas": ["pfas", "pfa", "forever chemical", "fluorine", "polyfluoro", "chemicals", "pfaa"],
+    "map_icon": [
+        "home icon", "map pin", "green dot", "circle marker", "cluster", "bubble",
+        "heatmap", "legend", "icons mean", "symbols", "map mean", "pin on the map",
+    ],
+    "pfos": ["pfos", "perfluorooctane", "sulfonate", "firefighting foam", "afff"],
+    "pfoa": ["pfoa", "perfluorooctanoic", "teflon", "non-stick", "carcinogen", "cancer"],
     "threshold": ["threshold", "100 ng", "limit", "exceedance", "regulatory"],
     "confidence": ["confidence", "uncertain", "how sure", "reliable", "trust", "extrapolation"],
     "shap": ["shap", "shapley", "why", "explain", "feature", "what drove", "what caused"],
     "airport": ["airport", "afff", "firefighting", "runway"],
     "model": ["model", "algorithm", "lightgbm", "machine learning", "ai", "how does it work", "accuracy"],
     "long chain": ["long chain", "long-chain", "persistent", "bioaccumulate", "pfna", "pfda"],
+    "general": ["general", "total pfas", "all compounds", "aggregate", "combined score", "total score"],
 }
 
 
@@ -301,7 +330,7 @@ class XAIEngine:
         # What does the score mean?
         if re.search(r"(score|100|scale|number|rating)", msg):
             return (
-                "The **Risk Score** (0-100) is the model's estimated probability of exceeding "
+                "The Risk Score (0-100) is the model's estimated probability of exceeding "
                 "100 ng/L PFAS - a key regulatory threshold. A score of 75 means the model "
                 "believes there is a 75% chance contamination at this location exceeds that limit. "
                 "Scores below 20 are considered low risk; above 60 are high concern."
@@ -310,7 +339,7 @@ class XAIEngine:
         # Simulation questions
         if re.search(r"(simulat|scenario|what if|preset|change|slider)", msg):
             return (
-                "The **Simulation Lab** lets you explore 'what if' scenarios. You can choose "
+                "The Simulation Lab lets you explore 'what if' scenarios. You can choose "
                 "presets like 'Industrial Spill' or 'Airport Expansion', or adjust individual "
                 "sliders for fine-grained control. The model instantly recalculates risk under "
                 "those conditions and shows you how much the probability changes, plus a "
@@ -320,9 +349,9 @@ class XAIEngine:
         # Default fallback - still helpful
         if ctx:
             return (
-                f"Based on the current analysis for **{ctx.compound}** at this location: "
+                f"Based on the current analysis for {ctx.compound} at this location: "
                 f"{ctx.headline} "
-                f"The top driver is **{ctx.top_features[0]['label']}**. "
+                f"The top driver is {ctx.top_features[0]['label']}. "
                 "Ask me anything more specific - for example: 'Why is the risk high?', "
                 "'What is PFOS?', or 'What would reduce the risk here?'"
             )
@@ -344,12 +373,12 @@ class XAIEngine:
 
         templates = {
             "dist_to_airport_km": (
-                f"The nearest airport is **{val:.1f} km** away. "
+                f"The nearest airport is {val:.1f} km away. "
                 f"Airport proximity {direction} risk because of firefighting foam (AFFF) contamination."
                 if val is not None else f"{label} {direction} risk."
             ),
             "spatial_density_50km": (
-                f"There are **{int(val) if val is not None else '?'} recorded PFAS measurements** within 50 km. "
+                f"There are {int(val) if val is not None else '?'} recorded PFAS measurements within 50 km. "
                 f"Higher density {direction} estimated risk - areas with more historical contamination tend to stay contaminated."
                 if val is not None else f"{label} {direction} risk."
             ),
@@ -358,31 +387,32 @@ class XAIEngine:
                 "This is a strong local signal - areas with elevated neighbours tend to be elevated themselves."
             ),
             "is_long_chain": (
-                f"**{feat.replace('is_','').replace('_',' ').title()}** compounds (like PFOS and PFOA) "
+                f"{feat.replace('is_','').replace('_',' ').title()} compounds (like PFOS and PFOA) "
                 f"are more persistent. Their presence {direction} the risk estimate."
             ),
             "nearest_training_point_km": (
-                f"The nearest real PFAS measurement is **{val:.0f} km** away. "
+                f"The nearest real PFAS measurement is {val:.0f} km away. "
                 f"This {direction} prediction confidence - farther from known data means more uncertainty."
                 if val is not None else f"{label} {direction} risk."
             ),
         }
-        return templates.get(feat, f"**{label}** {direction} risk at this location.")
+        return templates.get(feat, f"{label} {direction} risk at this location.")
 
     def _build_headline(self, prob: float, compound: str) -> str:
+        display_sub = "Total PFAS" if compound == "GENERAL" else compound
         if prob >= 0.65:
             return (
-                f"High contamination risk detected for {compound}. "
-                f"The model estimates a **{prob*100:.0f}% probability** of exceeding 100 ng/L."
+                f"High contamination risk detected for {display_sub}. "
+                f"The model estimates a {prob*100:.0f}% probability of exceeding 100 ng/L."
             )
         if prob >= 0.35:
             return (
-                f"Moderate risk for {compound}. "
-                f"There is a **{prob*100:.0f}% chance** of exceeding the 100 ng/L threshold."
+                f"Moderate risk for {display_sub}. "
+                f"There is a {prob*100:.0f}% chance of exceeding the 100 ng/L threshold."
             )
         return (
-            f"Lower risk for {compound}. "
-            f"The model estimates only a **{prob*100:.0f}% probability** of elevated contamination."
+            f"Lower risk for {display_sub}. "
+            f"The model estimates only a {prob*100:.0f}% probability of elevated contamination."
         )
 
     def _build_narrative(self, top_features, prob, conc, nearest_km, compound):
@@ -391,17 +421,17 @@ class XAIEngine:
 
         parts = [
             f"The model analysed environmental conditions at this location and returned "
-            f"an exceedance probability of **{prob*100:.1f}%** for **{compound}**. "
-            f"Estimated concentration: **{conc:.1f} ng/L**.",
+            f"an exceedance probability of {prob*100:.1f}% for {compound}. "
+            f"Estimated concentration: {conc:.1f} ng/L.",
         ]
         if top:
             parts.append(
-                f"The strongest signal is **{top['label']}**, which {top['direction'].split()[0].lower()}s risk. "
+                f"The strongest signal is {top['label']}, which {top['direction'].split()[0].lower()}s risk. "
                 f"{top['human_explanation']}"
             )
         if second:
             parts.append(
-                f"A second meaningful influence comes from **{second['label']}**. "
+                f"A second meaningful influence comes from {second['label']}. "
                 f"{second['human_explanation']}"
             )
         parts.append(self._data_quality_note(nearest_km))
@@ -441,9 +471,9 @@ class XAIEngine:
         if not top_names:
             return f"Risk is low at this location. No strong contamination signals were detected for {ctx.compound}."
         return (
-            f"The **{ctx.compound}** risk at this location is driven by:\n\n"
+            f"The {ctx.compound} risk at this location is driven by:\n\n"
             + "\n".join(f"- {ex}" for ex in ctx.risk_drivers[:4])
-            + f"\n\nOverall exceedance probability: **{ctx.exceedance_prob*100:.1f}%**. "
+            + f"\n\nOverall exceedance probability: {ctx.exceedance_prob*100:.1f}%. "
             + ctx.data_quality_note
         )
 
@@ -452,7 +482,7 @@ class XAIEngine:
             return "No analysis results available yet. Please run a scan first."
         top = ctx.top_features[0]
         return (
-            f"The biggest factor in this prediction is **{top['label']}** "
+            f"The biggest factor in this prediction is {top['label']} "
             f"(SHAP impact: {top['shap']:+.3f}). {top['human_explanation']}"
         )
 
@@ -465,11 +495,11 @@ class XAIEngine:
             )
         if ctx.exceedance_prob >= 0.5:
             return (
-                f"The model estimates a **{ctx.exceedance_prob*100:.0f}% chance** that "
-                f"**{ctx.compound}** levels exceed 100 ng/L at this location. "
-                "This is a screening alert - **do not use this as a safety clearance**. "
+                f"The model estimates a {ctx.exceedance_prob*100:.0f}% chance that "
+                f"{ctx.compound} levels exceed 100 ng/L at this location. "
+                "This is a screening alert - do not use this as a safety clearance. "
                 "Commission laboratory testing before making any public health decisions. "
-                f"Estimated concentration: **{ctx.concentration_ngl:.1f} ng/L**."
+                f"Estimated concentration: {ctx.concentration_ngl:.1f} ng/L."
             )
         return (
             f"The predicted risk here is relatively low ({ctx.exceedance_prob*100:.0f}% exceedance probability). "
@@ -481,8 +511,8 @@ class XAIEngine:
         if not ctx:
             return "Run a location scan to get a concentration estimate for a specific site."
         return (
-            f"The model estimates a **{ctx.compound}** concentration of approximately "
-            f"**{ctx.concentration_ngl:.1f} ng/L** at this location. "
+            f"The model estimates a {ctx.compound} concentration of approximately "
+            f"{ctx.concentration_ngl:.1f} ng/L at this location. "
             "This is a log-scale regression estimate. "
             "For context: the EU drinking water guideline for combined PFAS is 100 ng/L for "
             "20 priority compounds, and 10 ng/L for total PFAS sum."
@@ -492,19 +522,19 @@ class XAIEngine:
     def _answer_remediation():
         return (
             "Common approaches to reduce PFAS at a site:\n\n"
-            "- **Source control** - eliminate the PFAS input (e.g. replace AFFF foam with PFAS-free alternatives)\n"
-            "- **Granular Activated Carbon (GAC) filtration** - very effective for drinking water (~70-90% removal)\n"
-            "- **Pump-and-treat** - extract contaminated groundwater and treat above ground\n"
-            "- **Soil excavation** - remove heavily contaminated soil near the source\n"
-            "- **In-situ stabilisation** - immobilise PFAS in soil to prevent migration\n\n"
-            "Use the **Simulation Lab** to model how cleanup interventions change the risk score."
+            "- Source control - eliminate the PFAS input (e.g. replace AFFF foam with PFAS-free alternatives)\n"
+            "- Granular Activated Carbon (GAC) filtration - very effective for drinking water (~70-90% removal)\n"
+            "- Pump-and-treat - extract contaminated groundwater and treat above ground\n"
+            "- Soil excavation - remove heavily contaminated soil near the source\n"
+            "- In-situ stabilisation - immobilise PFAS in soil to prevent migration\n\n"
+            "Use the Simulation Lab to model how cleanup interventions change the risk score."
         )
 
     def _answer_accuracy(self, ctx):
         base = (
-            "The model was validated using **spatial block cross-validation** - a rigorous method "
+            "The model was validated using spatial block cross-validation - a rigorous method "
             "that prevents data leakage between geographically close samples. "
-            "It typically achieves a **ROC-AUC of 0.85-0.92** on held-out spatial blocks. "
+            "It typically achieves a ROC-AUC of 0.85-0.92 on held-out spatial blocks. "
         )
         if ctx:
             return base + ctx.data_quality_note
