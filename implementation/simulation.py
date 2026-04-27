@@ -135,9 +135,9 @@ def _build_plain_explanation(result: SimResult) -> str:
         change_desc = f"{direction} dramatically (by {magnitude:.1f} percentage points)"
 
     return (
-        f"Under the **{result.scenario_label}** scenario, the estimated contamination probability "
-        f"has **{change_desc}** from {result.base_prob*100:.1f}% to {result.scenario_prob*100:.1f}%. "
-        f"The risk level is now **{result.risk_level}**. {result.risk_narrative}"
+        f"Under the {result.scenario_label} scenario, the estimated contamination probability "
+        f"has {change_desc} from {result.base_prob*100:.1f}% to {result.scenario_prob*100:.1f}%. "
+        f"The risk level is now {result.risk_level}. {result.risk_narrative}"
     )
 
 

@@ -34,6 +34,8 @@ MODELS_DIR = ROOT / "outputs" / "models"
 KD_DIR     = ROOT / "outputs" / "kdtrees"
 EARTH_R    = 6371.0
 
+SUBSTANCES = ["PFOS", "PFOA", "PFHXS", "PFNA", "PFDA", "PFHPA", "PFBS"]
+
 SUBSTANCE_ORD = {
     "PFBS": 0, "PFHPA": 1, "PFHXS": 2, "PFNA": 3, "PFDA": 4, "PFOA": 5, "PFOS": 6
 }
@@ -142,7 +144,7 @@ class PFASPredictor:
             "is_wastewater":             is_wastewater,
             "year_normalized":           yr_norm,
             "is_post_2018":              post2018,
-            "month":                     -1,
+            "month":                     6,  # Default to mid-year for sensitivity
             "spatial_density_50km":      density_50,
             "mean_log_value_50km":       mean_log_50,
             "nearest_training_point_km": nearest_km,
@@ -169,6 +171,50 @@ class PFASPredictor:
         year: int = 2024,
         media_type: str = "surface water",
     ) -> dict:
+        if substance.upper() == "GENERAL":
+            # For General PFAS, we aggregate results across all compounds
+            sub_results = [
+                self.predict(lat, lon, sub, year, media_type)
+                for sub in SUBSTANCES
+            ]
+            
+            # Probability: Probability that *at least one* compound exceeds 100 ng/L
+            # Since compounds often co-occur, we take the max probability as the base
+            # and add a small contribution from others if they are significant.
+            # A more robust aggregation for exceedance is 1 - prod(1-p_i)
+            # which assumes independence (conservative/risk-averse).
+            total_prob = 1.0 - np.prod([1.0 - r["exceedance_prob"] for r in sub_results])
+            
+            # Concentration: Simple sum of estimated concentrations
+            total_conc = sum(r["predicted_value_ngl"] for r in sub_results)
+            
+            # Log prediction: log(total_conc + 1)
+            total_log = np.log1p(total_conc)
+            
+            # SHAP: Average SHAP values (heuristic for importance in General score)
+            all_shap = {}
+            for r in sub_results:
+                for k, v in r["shap_values"].items():
+                    all_shap[k] = all_shap.get(k, 0.0) + v
+            for k in all_shap:
+                all_shap[k] /= len(sub_results)
+                
+            # Basic info from the first result (spatial distance is the same)
+            base = sub_results[0]
+            
+            return {
+                "exceedance_prob":           float(total_prob),
+                "predicted_value_ngl":       float(total_conc),
+                "log_prediction":            float(total_log),
+                "dist_to_nearest_sample_km": base["dist_to_nearest_sample_km"],
+                "dist_to_airport_km":        base["dist_to_airport_km"],
+                "confidence_level":          base["confidence_level"],
+                "confidence_note":           base["confidence_note"],
+                "shap_values":               all_shap,
+                "feature_vector":            base["feature_vector"],
+                "substance":                 "GENERAL",
+            }
+
         X, nearest_km, airport_km = self.build_feature_frame(lat, lon, substance, year, media_type)
 
         prob = float(self.clf.predict_proba(X)[0, 1])
