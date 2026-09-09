@@ -240,7 +240,8 @@ def train():
         lgbm_final = LGBMClassifier(**best_params)
         lgbm_final.fit(X_full, y_full)
 
-        # Isotonic calibration
+        # Sigmoid (Platt) calibration avoids broad exact 0/1 plateaus on
+        # sparse spatial validation folds.
         gkf = GroupKFold(n_splits=5)
         cal_tr, cal_val = next(iter(gkf.split(X, y, groups)))
         
@@ -249,7 +250,7 @@ def train():
         
         # In newer scikit-learn, 'prefit' is replaced by wrapping in FrozenEstimator
         lgbm_cal = CalibratedClassifierCV(
-            FrozenEstimator(lgbm_final_for_cal), method="isotonic"
+            FrozenEstimator(lgbm_final_for_cal), method="sigmoid"
         )
         lgbm_cal.fit(X[cal_val], y[cal_val])
 

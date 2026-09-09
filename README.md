@@ -59,7 +59,7 @@ python implementation/dashboard/main.py
 | Primary classifier | LightGBM (Optuna-tuned, 80 trials, spatial block CV) |
 | Secondary comparison | XGBoost + Random Forest |
 | Class imbalance | ADASYN oversampling |
-| Calibration | Isotonic regression (CalibratedClassifierCV) |
+| Calibration | Platt sigmoid scaling (CalibratedClassifierCV) |
 | Explainability | SHAP TreeExplainer |
 | Tracking | MLflow |
 

@@ -82,14 +82,16 @@ def load_summary() -> dict[str, Any] | None:
     df = pd.read_parquet(GOLDEN_PATH, columns=cols)
     year_s = pd.to_numeric(df.get("year", pd.Series(dtype=float)), errors="coerce")
     exc_s = pd.to_numeric(df.get("above_100_ng_l", pd.Series(dtype=float)), errors="coerce")
-    label_data = df.dropna(subset=["country", "lat", "lon"])
-    label_data = label_data[label_data["country"].str.lower() != "unknown"]
-    country_labels = (
-        label_data.groupby("country", as_index=False)
-        .agg(lat=("lat", "median"), lon=("lon", "median"), records=("country", "size"))
-        .nlargest(12, "records")
-        .to_dict(orient="records")
-    )
+    country_labels = []
+    if {"country", "lat", "lon"}.issubset(df.columns):
+        label_data = df.dropna(subset=["country", "lat", "lon"])
+        label_data = label_data[label_data["country"].str.lower() != "unknown"]
+        country_labels = (
+            label_data.groupby("country", as_index=False)
+            .agg(lat=("lat", "median"), lon=("lon", "median"), records=("country", "size"))
+            .nlargest(12, "records")
+            .to_dict(orient="records")
+        )
 
     return {
         "rows": len(df),
@@ -241,7 +243,7 @@ def overview_map_figure() -> go.Figure:
                 name="Country boundaries",
                 line={"color": "rgba(76, 93, 92, 0.42)", "width": 0.7},
                 fill="toself",
-                fillcolor="rgba(255, 255, 255, 0.80)",
+                fillcolor="rgba(255, 255, 255, 0.12)",
                 hoverinfo="skip",
             )
         )

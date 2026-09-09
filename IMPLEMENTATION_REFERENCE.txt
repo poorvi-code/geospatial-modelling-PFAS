@@ -16,7 +16,7 @@ TABLE OF CONTENTS
  6. Bayesian Hyperparameter Tuning — Optuna TPE (Algorithm)
  7. LightGBM Gradient-Boosted Decision Trees (Full Algorithm)
  7.5. Complete Training Pipeline & Parameters
- 8. Isotonic Calibration (Algorithm)
+ 8. Platt Sigmoid Calibration (Algorithm)
  9. Concentration Regression Pipeline
 10. KD-Tree Spatial Index (Algorithm)
 11. SHAP Explainability (Algorithm)
@@ -367,7 +367,7 @@ STAGE 3: BASELINE EVALUATIONS
 STAGE 4: FINAL TRAINING & CALIBRATION
   • Full Dataset Training: The best LightGBM parameters are used to train a final
     model on the entire dataset (after full-data ADASYN resampling).
-  • Isotonic Calibration: A separate CalibratedClassifierCV is fit on a 20%
+  • Platt Sigmoid Calibration: A separate CalibratedClassifierCV is fit on a 20%
     spatial hold-out (wrapping a FrozenEstimator trained on the other 80%) to
     recalibrate probabilities.
   • Regressor Training: An LGBMRegressor is trained on the log-transformed
@@ -376,11 +376,12 @@ STAGE 4: FINAL TRAINING & CALIBRATION
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-8. ISOTONIC CALIBRATION
+8. PLATT SIGMOID CALIBRATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Raw LightGBM probability outputs are often poorly calibrated (overconfident).
-Isotonic regression recalibrates them to match the empirical positive rate.
+Platt sigmoid scaling recalibrates them to match the empirical positive rate
+without producing broad exact-zero or exact-one probability plateaus.
 
 ALGORITHM: CalibratedClassifierCV + FrozenEstimator
 
@@ -391,22 +392,16 @@ ALGORITHM: CalibratedClassifierCV + FrozenEstimator
           block constraint):
             For each sample: obtain the raw score sᵢ = sigmoid(F_T(xᵢ))
 
-  Step 3: Fit Isotonic Regression on (sᵢ, yᵢ) pairs:
-            Find monotone non-decreasing step function m(s) minimising:
-            Σ (m(sᵢ) − yᵢ)² subject to m(s₁) ≤ m(s₂) for s₁ ≤ s₂
+  Step 3: Fit a sigmoid calibrator on (sᵢ, yᵢ) pairs:
+            p_calibrated = 1 / (1 + exp(A * sᵢ + B))
+            where A and B are fit on the held-out labels.
 
-            Solved by the Pool Adjacent Violators (PAV) algorithm:
-              - Process scores in ascending order
-              - If a pair violates monotonicity (m(sᵢ) > m(sᵢ₊₁)):
-                  merge the two points, replace with weighted average
-              - Continue until no violations remain
+  Step 4: At inference: p_calibrated(x) is the fitted sigmoid of p_raw(x)
 
-  Step 4: At inference: p_calibrated(x) = m(p_raw(x))
-
-  Why isotonic and not Platt scaling?
-    Platt scaling fits a sigmoid: suitable when raw scores are sigmoidal.
-    Isotonic fitting is non-parametric — no shape assumption — and performs
-    better when the raw output is already somewhat calibrated (as with LightGBM).
+  Why Platt scaling?
+    The held-out spatial fold is large but highly imbalanced. A sigmoid gives
+    smooth probabilities across the score range and avoids broad zero/one
+    plateaus while preserving calibration semantics.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -932,13 +927,13 @@ WHAT TO LOOK FOR
   • Points BELOW the diagonal: model is overconfident (actual rate < predicted).
   • Yellow dashed lines show the deviation of each point from perfect calibration.
     Shorter lines = better calibration.
-  • This plot validates the isotonic calibration step (Section 8). Without
+  • This plot validates the sigmoid calibration step (Section 8). Without
     calibration, LightGBM outputs are typically pushed toward 0 and 1 ends,
-    shown as a sigmoidal curve. Isotonic calibration corrects this.
+    shown as a sigmoidal curve. Sigmoid calibration corrects this.
 
 ACTUAL RESULTS
   Brier Score = 0.0206 — very well calibrated.
-  The curve closely tracks the diagonal, confirming isotonic calibration worked.
+  The curve closely tracks the diagonal, confirming sigmoid calibration worked.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -4,7 +4,7 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
-from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve
+from sklearn.metrics import confusion_matrix, roc_curve, auc
 
 # Paths
 ROOT = Path(".")
@@ -24,10 +24,12 @@ def generate_plots():
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
     
-    # Prepare features
+    # Prepare features, matching the training pipeline's valid-label filter.
     from implementation.train import FEATURE_COLS
-    X = df[FEATURE_COLS].replace([np.inf, -np.inf], np.nan).fillna(-1).values
-    y = df["above_100_ng_l"].values.astype(int)
+    labels = pd.to_numeric(df["above_100_ng_l"], errors="coerce")
+    valid_labels = labels.notna()
+    X = df.loc[valid_labels, FEATURE_COLS].replace([np.inf, -np.inf], np.nan).fillna(-1).values
+    y = labels.loc[valid_labels].astype(int).values
     
     # Predict
     print("Generating predictions...")

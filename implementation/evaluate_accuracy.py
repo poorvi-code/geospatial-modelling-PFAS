@@ -145,7 +145,7 @@ def plot_calibration(y_true, y_prob):
     ax.plot([0, 1], [0, 1], ":", color=PALETTE["muted"], lw=1.5, label="Perfect calibration")
     ax.plot(mean_pred, frac_pos, "o-", color=PALETTE["green"], lw=2.2,
             markersize=8, markerfacecolor=PALETTE["bg"], markeredgewidth=2.2,
-            label="PFAS classifier (isotonic-calibrated)")
+            label="PFAS classifier (sigmoid-calibrated)")
     for mp, fp in zip(mean_pred, frac_pos):
         ax.plot([mp, mp], [mp, fp], color=PALETTE["yellow"], lw=1, alpha=0.5, linestyle="--")
 
